@@ -2,16 +2,14 @@ Note:  this is an amended version of our original Design Document for the MSA De
 I have edited it for the purposes of this technical interview. I selected this particular Design Document because it most closely fits the prompt.
 This was a 1-3 month project on which I was lead and there were several of us working on the MSA pallet implementing these features. I wrote much of the original content of this document which edited further as the features evolved.  Please also note the format of this Design Document was taken directly from examples from when I worked on the Filecoin project.
 
-You may see our [Design Documents in the Frequency repository](https://github.com/frequency-chain/frequency/tree/main/designdocs).  For a more recent example, please see the [Provider Boost Implementation](https://github.com/frequency-chain/frequency/blob/feat/capacity-staking-rewards-impl/designdocs/provider_boosting_implementation.md) Design Document which I also wrote (both the implementation and [Economic Model docs](https://github.com/frequency-chain/frequency/blob/feat/capacity-staking-rewards-impl/designdocs/provider_boosting_economic_model.md)). However I did not select these, because I am the only person doing the implementation and it has been longer than a 3 month project.
-
 # Delegations
 
-This document describes provable, revocable, permissioned delegation of specific actions to support the Decentralized Social Network Protocol (DSNP) on the Frequency Polkadot Parachain, referred to from now on as DSNP/Frequency (DSNP over Frequency).
-These actions are largely related to DSNP Id creation, DSNP Profile management, and DSNP Message announcements by the owner of the DSNP Id.
+This document describes provable, revocable, permissioned delegation of specific actions to support the [Decentralized Social Network Protocol (DSNP)](https://spec.dsnp.org) on the Frequency Polkadot Parachain, referred to from now on as [DSNP/Frequency (DSNP over Frequency)](https://spec.dsnp.org/Frequency/Overview.html).
+These actions are largely related to DSNP Id creation, DSNP Profile management, DSNP (Social) Graph, and DSNP Message announcements by the owner of the DSNP Id.
 
-On the Frequency chain, a DSNP Id is mapped to a Message Source Account, or MSA Id, which is controlled using cryptographic signatures with a Polkadot `AccountId` keypair.
-This control can be purely wallet-based so it does not require a token balance to exist on chain.
-Non-token control of delegation actions uses cryptographic signatures of a payload, which proves authorization by both parties.
+On the Frequency chain, a DSNP Id is mapped to a Message Source Account, or MSA Id, which is controlled using cryptographic signatures via a Polkadot `AccountId` keypair.
+This control can be purely wallet-based, so it does not require a token balance to exist on chain.
+Non-token control of delegation actions uses cryptographic signatures of a payload, which is validated during the delegation transaction to prove authorization by both parties.  A failure to validate causes the transaction to fail.
 
 The authorized actions occur on the Frequency chain and are performed by one or more Providers on the DNSP Id holder's behalf.
 A Provider is a type of MSA Id holder who has registered as a Provider on the Frequency chain and has been authorized by Frequency's chain governance process.
@@ -41,17 +39,18 @@ Market research makes it clear that End Users are extremely reluctant to pay to 
 Secondly, as we are attempting to build a decentralized social networking platform that does not privilege wealth, asking people to pay to use it is contradictory to our purpose.
 This means there needs to be some way to onboard End Users and relay their activity via DSNP/Frequency without charging them.
 We are also building a platform that brings people's "switching cost" to zero so that people are not forced to use a platform that does not serve their needs, whatever they may be.  
-This means switching from one Provider to another must be free, easy, and transparent.
-Next, the platform must also provide these delegations in a way that makes it extremely difficult to perform delegated actions without the End User's permission or knowledge.
+
+Requiring the switching cost to be zero means that switching from one Provider to another must be free, easy, and transparent.
+Next, the platform must also provide these delegations in a way that makes it extremely difficult to perform delegated actions without the End User's permission.
 Cryptography primitives and consensus mechanisms that are inherent to blockchains are a natural solution to this problem.
 
 The use of authorized delegates, that is, Providers, enables the creation of End User accounts as well as processing and storing user messages and other data for the End Users, paid for by a Provider, who can recoup these costs by other means (outside the scope of this Design Document).
-The vast majority of the End User's actual activity will not reside on chain, however, Frequency needs to be able to coordinate the exchange of data, and to securely allow an End User or any other type of account holder to manage their Delegates.
-The End User -> Provider delegation is managed by assigning each account, called a Message Source Account or MSA, an ID number, called an MsaId.
+The vast majority of the End User's actual activity will not reside on chain, however, Frequency needs to be able to coordinate the exchange of data, provide for discoverability, and to securely allow an End User or any other type of account holder to manage their Delegates.
+The End User --> Provider delegation is managed by assigning each account, called a Message Source Account or MSA, an ID number, called an Msa Id.
 
 ## Technical Goals and Non-Goals
 
-Delegation, roughly speaking, must allow all Create, Read, Update and Delete (CRUD) operations by a Provider MSA to fulfill the purpose of giving other MSAs proper authority over their Delegates.
+Delegation, roughly speaking, must allow all Create, Read, Update and Delete (CRUD) operations by a Provider MSA to fulfill the purpose of performing actions on behalf of their Delegators.
 Put another way, delegation must have the following properties:
 
 - **Authorizable** - delegations can be authorized with specific permissions by MSAs.
@@ -81,7 +80,7 @@ _NB: "extrinsics" is the Polkadot term for on-chain transactions._
 - All extrinsics must emit a unique event with all parameters for the call, unless otherwise specified.
 - Errors in the extrinsics must have unique, reasonably-named error enums for each type of error for ease of debugging.
 - "Owner only" means the caller must own the delegator MSA id.
-- Events are not deposited for read-only extrinsic calls.
+- Events are not deposited for read-only extrinsic calls.  In addition to readable state storage, Events help fulfill the requirement of transparency.
 
 #### create_sponsored_account_with_delegation
 
@@ -104,12 +103,12 @@ Creates a new MSA on behalf of a delegator and adds the MSA Id associated with t
 
 #### revoke_delegation_by_provider
 
-Provider revokes its relationship from the specified `delegator` in the parameters. This function allows a Provider to control access to its services, for example, in the case of an End User that violates Terms of Service.
+Supports the revocability requirement.  Provider revokes its relationship from the specified `delegator` in the parameters. This function allows a Provider to control access to its services, for example, in the case of an End User that violates Terms of Service.
 
 - Parameters:
 
     1. `delegator` - the MSA Id of the delegator (generally an end user)
-
+- Restrictions: **Owner only** - this transaction is restricted by default to the owner of the Provider MSA Id, as the relationship to be revoked is looked up based on the transaction signer's public key.
 - Events on success:
     1. `ProviderRevokedDelegation`
         - `provider` - MSA Id held by the Provider
@@ -126,7 +125,7 @@ This is a signed call directly from the caller, so the owner of the new MSA pays
 
 #### revoke_delegation_by_delegator
 
-A delegator removes its relationship from a Provider.
+Supports the revocability requirement. A delegator removes its relationship from a Provider.
 This is a signed call directly from the delegator's MSA.
 This call is exempted from transaction fees.
 
@@ -134,25 +133,27 @@ This call is exempted from transaction fees.
 
     1. `provider_msa_id` - id of the MSA held by the Provider
 
-- Restrictions: **Owner only**.
+- Restrictions: **Owner only** - this transaction is restricted to the owner of the Delegator MSA Id, since the relationship to be revoked is looked up based on the transaction signer's public key.
 
 - Event: `DelegateRemoved`
     1. `delegator` - id of the MSA held by the delegator
     2. `Provider` - id of the MSA held by the Provider
 
 ### Custom RPC endpoints
+Custom RPC endpoints on a Polkadot parachain are excecuted off chain and perform read-only operations.
 
 #### get_msa_keys(msa_id)
 
-Retrieve a list of public keys of up to `MaxPublicKeysPerMsa` size for the provided MSA id, or an empty list if the MSA id does not exist.
+Supports the verifiability requirement. Retrieve a list of public keys of up to `MaxPublicKeysPerMsa` size for the provided MSA id, or an empty list if the MSA id does not exist.
 
 - Parameters:
     1. `msa_id`: the MSA id of which associated keys are to be retrieved
 
 #### check_delegations
 
-Validate that a Provider can delegate for a list of MSA ids.
-This call is intended for validating messages in a batch, so this function would be an all-or-nothing check.
+Supports the verifiability requirement.
+Validate that a Provider can delegate for a list of MSA ids. 
+This call is intended for validating messages referenced by a message pallet `add_message` transaction for a [DSNP Batch Announcement](https://spec.dsnp.org/DSNP/BatchPublications.html), so this function would be an all-or-nothing check.
 If the permission stored for a given MSA id exceeds the parameter, the check for that MSA id passes.
 For example, if a Provider has _all_ permissions set, then querying for a subset of permissions will pass.
 Verify that the provided Provider `provider_msa_id` is a Provider of the delegator, and has the given permission value.
@@ -164,19 +165,31 @@ Throws an Error enum indicating if either Provider or delegator does not exist.
     2. `provider_msa_id`: the ProviderId to verify
 
 ### Storage
+This section describes any necessary on-chain state storage for this feature. State storage of Delegations supports the changeability requirement. State storage is also readable for free and by anyone with access to a node endpoint, which supports the transparency requirement.
 
-- Delegations are stored as a Double-key map of Delegator MSA id --> Provider MSA id. The data stored contains the `Permission` for that relationship:
+- Delegations are stored as a double-key map of Delegator MSA Id + Provider MSA Id. The data stored is a bounded BTree of `SchemaId` mapped to a revocation block for that relationship.  A revocation block of 0 means the delegation is active for that `SchemaId`.
+- The entire delegation can be revoked by setting `blocked_at` to the block number when it is revoked.  Alternatively, individual schemas can be revoked by doing the same for the Schema Id entry in `schema_permissions`
 
 ```rust
-    pub(super) type DelegatorAndProviderToDelegation<T: Config> = StorageDoubleMap<
-        _,
-        Twox64Concat,
-        Delegator,
-        Twox64Concat,
-        Provider,
-        Delegation<SchemaId, BlockNumberFor::<T>, T::MaxSchemaGrantsPerDelegation>,
-        OptionQuery,
-    >;
+pub struct Delegation<SchemaId, BlockNumber, MaxSchemaGrantsPerDelegation>
+where
+	MaxSchemaGrantsPerDelegation: Get<u32>,
+{
+	/// Block number the grant will be revoked.
+	pub revoked_at: BlockNumber,
+	/// Schemas that the provider is allowed to use for a delegated message.
+	pub schema_permissions: BoundedBTreeMap<SchemaId, BlockNumber, MaxSchemaGrantsPerDelegation>,
+}
+
+pub(super) type DelegatorAndProviderToDelegation<T: Config> = StorageDoubleMap<
+    _,
+    Twox64Concat,
+    Delegator,
+    Twox64Concat,
+    Provider,
+    Delegation<SchemaId, BlockNumberFor::<T>, T::MaxSchemaGrantsPerDelegation>,
+    OptionQuery,
+>;
 ```
 
 ## Benefits and Risks
@@ -195,7 +208,7 @@ We briefly discussed the possibility of requiring a small token deposit to creat
 
 1. As mentioned above, people don't expect and won't pay to use social media.
 2. Onboarding would be a problem; even if they did want to pay even a small amount, getting people access to a token is tremendously difficult at this time, requiring unacceptable tradeoffs.
-3. We would be unable to serve people who are unbanked or don't have access to crypto trading platforms.
+3. We would be unable to serve people who are unbanked and/or don't have access to crypto trading platforms.
 
 ### dApp Developer pays for existential deposit
 
@@ -203,7 +216,7 @@ One alternative to allow for account creation at no cost to the End User was the
 We decided against this option for a number of reasons.
 
 1. It could create a potential for abuse and token loss by those creating numerous fake accounts and then removing the dApp Public Key as a Provider.
-2. We have the ability not to require an existential deposit, and felt this to be a better option in this particular case.
+2. The chain already supports the ability not to require an existential deposit, and felt this to be a better option in this case.
 
 ### End user pays to send messages, with no possibility of delegating
 
@@ -213,28 +226,31 @@ This was ruled out as the sole solution because:
 1. The average person can't or won't pay to use social media.  See reasons above for existential deposit.
 2. Making End Users pay to send messages would require people to sign transactions every time they make any updates — all posts, all reactions, all replies, all profile changes, all follows/unfollows, etc. Having to do this would be too annoying for the End User.
 
-This design still includes some direct pay endpoints, so even if an End User did not want to trust a Provider, they could still pay for all of their messages if they want to assume the cost of running a node and pay directly.
+This design still includes some direct pay endpoints, so even if an End User did not want to trust a Provider, they could still pay for all of their messages, assuming they have some way of obtaining FRQCY token.
 
 ### Permissioned delegation is an industry standard
 
 Furthermore, permissioned delegation via verifiable strong cryptographic signature is a well-known and tested feature in smart contracts of distributed blockchain-based applications.
 
-### Deferred features
+## Deferred features
 
-#### An "effective block range" for providers
+### An "effective block range" for providers
 
 Including an effective block range in the Provider storage data would allow providers to be expired, not just removed. A block range could better support features like Tombstone, blocking, and retiring an MSA id. Effective block range is deferred because those features have not been fully defined. (_Tombstone messages are now defined as DSNP Announcements, and MSA Id retirement on Frequency is now implemented_)
 
-#### add_provider(delegator, Provider, permissions)
+### add_provider(delegator, Provider, permissions)
 _This still cannot be done; we've adopted the philosophy that all relationships should be mutual and opt-in, so adding a provider still requires both signatures._
 
 Directly adding a Provider, with or without a Provider's permission, is not to be implemented at this time. The original use case was for a potential wallet app to support browsing and adding providers. Adding/replacing a Provider for an existing account with an MSA id could still be done using the delegated methods, `add_self_as_delegate` or `replace_delegate_with_self`. A direct add brought up concerns about potential risks of adding a Provider without the Provider's knowledge. For example, if the Provider has removed the delegator for legitimate reasons, such as if the End User violated the Provider's Terms of Service, then the Provider ought to be able to prevent them from adding the Provider again just by paying for it.
 
 ## Glossary
 
-- **Provider**: An MSA that has been granted specific permissions by its Delegator. A company or individual operating an on-chain Provider MSA in order to post Frequency transactions on behalf of other MSAs.
+- **Provider**: An MSA that has been granted specific permissions by its Delegator. A company or individual operating an on-chain Provider MSA in order to post Frequency transactions on behalf of other MSAs.  A Provider must be registered and approved via Frequency chain proposal before it can receive any delegations.
 - **Delegator**: An MSA that has granted specific permissions to a Provider.
-- **MSA**: Message Source Account. A collection of key pairs which can have a specific token balance.
+- **MSA**: Message Source Account refers to the DSNP Id that lives on the Frequency Chain as an integer MSA Id, plus one or more cryptographic key pairs that are associated with it.  The keys may or may not have a token account.
 - **Public Key**: A 32-byte (u256) number that is used to refer to an on-chain MSA and verify signatures. It is one of the keys of an MSA key pair
 - **MsaId**: An 8-byte (u64) number used as a lookup and storage key for delegations, among other things
 - **End User**: Groups or individuals that own an MSA that is not a Provider MSA.
+
+You may see our [Design Documents in the Frequency repository](https://github.com/frequency-chain/frequency/tree/main/designdocs).  For a more recent example, please see the [Provider Boost Implementation](https://github.com/frequency-chain/frequency/blob/feat/capacity-staking-rewards-impl/designdocs/provider_boosting_implementation.md) Design Document which I also wrote (both the implementation and [Economic Model docs](https://github.com/frequency-chain/frequency/blob/feat/capacity-staking-rewards-impl/designdocs/provider_boosting_economic_model.md)). However I did not select these, because I am the only person doing the implementation and it has been longer than a 3 month project.
+
