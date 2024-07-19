@@ -212,11 +212,12 @@ We briefly discussed the possibility of requiring a small token deposit to creat
 
 ### dApp Developer pays for existential deposit
 
-One alternative to allow for account creation at no cost to the end user was the dApp developer MSA sends an existential deposit to the account to create it.
-We decided against this option for a number of reasons.
+One alternative to allow for account creation at no cost to the end user was to have the dApp developer MSA send an existential deposit to the account to create it.
+We decided against this option for a number of reasons:
 
-1. It could create a potential for abuse and token loss by those creating numerous fake accounts and then removing the dApp Public Key as a Provider.
-2. The chain already supports the ability not to require an existential deposit, and felt this to be a better option in this case.
+1. It could create a potential for abuse and token loss by those creating numerous fake accounts and then removing the delegation (which is a free transaction).
+2. This creates unpredictable capital expenses just for user acquisition.  
+3. Assuming typical user dropoff rates, creating a user account with an existential deposit could have a dramatic effect on token inflation as well as putting a burden on node storage.  While unused accounts could theoretically be reaped and the token burned or returned to storage, such solutions could undermine trust in the Frequency network.
 
 ### MSA pays to send messages, with no possibility of delegating
 
