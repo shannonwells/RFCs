@@ -1,6 +1,6 @@
 _This is an amended version of our original Design Document for the MSA Delegation feature that we implemented on the Frequency Polkadot parachain.
-I have edited it for the purposes of this technical interview. I selected this particular Design Document because it most closely fits the prompt.
-This was a 1-3 month project on which I was lead and there were several of us working on the MSA pallet implementing these features. I wrote much of the original content of this document which edited further as the features evolved.  Please also note the format of this Design Document was taken directly from examples from when I worked on the Filecoin project._
+I have edited it and annotated it for the purposes of this technical interview. I selected this particular Design Document because it most closely fits the prompt.
+This was a 1-3 month project on which I was lead and there were several of us working on the MSA pallet implementing these features. I wrote much of the original content of this document which edited further as the features evolved.  Please also note the format of this Design Document was taken directly from examples from when I worked on the Filecoin project. _
 
 # Delegations
 
