@@ -33,20 +33,20 @@ It's expected that the actions and permissions that are implemented for delegati
 
 ## Problem Statement
 
-The primary motivation for delegation is to support End Users of DSNP/Frequency, however, it is expected that delegation will be used in other ways.
+The primary motivation for delegation is to support end users of DSNP/Frequency, however, it is expected that delegation will be used in other ways.
 
-Market research makes it clear that End Users are extremely reluctant to pay to use applications, particularly social networks.
+Market research makes it clear that people are extremely reluctant to pay to use applications, particularly social networks.
 Secondly, as we are attempting to build a decentralized social networking platform that does not privilege wealth, asking people to pay to use it is contradictory to our purpose.
-This means there needs to be some way to onboard End Users and relay their activity via DSNP/Frequency without charging them.
+This means there needs to be some way to onboard end users of social applications and relay their activity via DSNP/Frequency without charging them.
 We are also building a platform that brings people's "switching cost" to zero so that people are not forced to use a platform that does not serve their needs, whatever they may be.  
 
 Requiring the switching cost to be zero means that switching from one Provider to another must be free, easy, and transparent.
-Next, the platform must also provide these delegations in a way that makes it extremely difficult to perform delegated actions without the End User's permission.
+Next, the platform must also provide these delegations in a way that makes it extremely difficult to perform delegated actions without the person's permission.
 Cryptography primitives and consensus mechanisms that are inherent to blockchains are a natural solution to this problem.
 
-The use of authorized delegates, that is, Providers, enables the creation of End User accounts as well as processing and storing user messages and other data for the End Users, paid for by a Provider, who can recoup these costs by other means (outside the scope of this Design Document).
-The vast majority of the End User's actual activity will not reside on chain, however, Frequency needs to be able to coordinate the exchange of data, provide for discoverability, and to securely allow an End User or any other type of account holder to manage their Delegates.
-The End User --> Provider delegation is managed by assigning each account, called a Message Source Account or MSA, an ID number, called an Msa Id.
+The use of authorized delegates, that is, Providers, enables the creation of accounts as well as processing and storing user messages and other data for the end users, paid for by a Provider, who can recoup these costs by other means (outside the scope of this Design Document).
+The vast majority of the end user's actual activity will not reside on chain, however, Frequency needs to be able to coordinate the exchange of data, provide for discoverability, and to securely allow an account holder to manage their Delegates.
+The Delegator --> Provider delegation is managed by assigning each account, called a Message Source Account or MSA, an ID number, called an Msa Id.
 
 ## Technical Goals and Non-Goals
 
@@ -69,9 +69,9 @@ Put another way, delegation must have the following properties:
 
 ## Proposal
 
-The proposed solution is to give End Users the ability to create an on-chain MSA Id through an authorized Provider. End Users can also transparently authorize and manage their own Providers and permissions, either directly using a native token or through an explicitly authorized Provider. Additionally, we allow MSA ids` to be directly created using the native FRQCY token.
+The proposed solution is to give someone the ability to create an on-chain MSA Id through an authorized Provider. One could also transparently authorize and manage their own Providers and permissions, either directly using a native token or through an explicitly authorized Provider. Additionally, we allow MSA ids` to be directly created using the native FRQCY token.
 
-The method for creating and managing these delegations without requiring the End User to have a token balance is by cryptographically signed payloads that are validated on chain. The delegator signs a payload using their own, typically wallet-based keys, however the delegator key is a Polkadot `AccountId` and may have a token balance.
+The method for creating and managing these delegations without requiring the MSA account holder to have a token balance is by cryptographically signed payloads that are validated on chain. The delegator signs a payload using their own, typically wallet-based keys, however the delegator key is a Polkadot `AccountId` and may have a token balance.
 
 ### API (extrinsics)
 _NB: "extrinsics" is the Polkadot term for on-chain transactions._
@@ -103,7 +103,7 @@ Creates a new MSA on behalf of a delegator and adds the MSA Id associated with t
 
 #### revoke_delegation_by_provider
 
-Supports the revocability requirement.  Provider revokes its relationship from the specified `delegator` in the parameters. This function allows a Provider to control access to its services, for example, in the case of an End User that violates Terms of Service.
+Supports the revocability requirement.  Provider revokes its relationship from the specified `delegator` in the parameters. This function allows a Provider to control access to its services.
 
 - Parameters:
 
@@ -196,13 +196,13 @@ pub(super) type DelegatorAndProviderToDelegation<T: Config> = StorageDoubleMap<
 
 As stated earlier, one of the primary intended benefits of delegation is to allow feeless account creation and messaging.
 
-There is a risk of abuse with delegation of messages, since this makes it possible for a Provider to, for example, modify the End User's messages before batching them. The message sender would have to be caught and the End User must react after the fact, instead of the message sender being technologically prevented from this type of dishonesty.
+There is a risk of abuse with delegation of messages, since this makes it possible for a Provider to, for example, modify the a user's messages before batching them. The message sender would have to be caught and the person must react after the fact, instead of the message sender being technologically prevented from this type of dishonesty.
 
-There is another risk of abuse for any other type of delegated call if the wallet that provides the signing capability does not make it very clear to the End User what they're signing.
+There is another risk of abuse for any other type of delegated call if the wallet that provides the signing capability does not make it very clear to the user what they're signing.
 
 ## Alternatives and Rationale
 
-### End User pays for existential deposit
+### MSA holder pays for existential deposit
 
 We briefly discussed the possibility of requiring a small token deposit to create their account. We decided against this option because:
 
@@ -212,21 +212,21 @@ We briefly discussed the possibility of requiring a small token deposit to creat
 
 ### dApp Developer pays for existential deposit
 
-One alternative to allow for account creation at no cost to the End User was the dApp developer MSA sends an existential deposit to the account to create it.
+One alternative to allow for account creation at no cost to the end user was the dApp developer MSA sends an existential deposit to the account to create it.
 We decided against this option for a number of reasons.
 
 1. It could create a potential for abuse and token loss by those creating numerous fake accounts and then removing the dApp Public Key as a Provider.
 2. The chain already supports the ability not to require an existential deposit, and felt this to be a better option in this case.
 
-### End user pays to send messages, with no possibility of delegating
+### MSA pays to send messages, with no possibility of delegating
 
-An alternative for delegating messaging capabilities was to have each End User pay for their own messages.
+An alternative for delegating messaging capabilities was to have each MSA pay for their own messages.
 This was ruled out as the sole solution because:
 
 1. The average person can't or won't pay to use social media.  See reasons above for existential deposit.
-2. Making End Users pay to send messages would require people to sign transactions every time they make any updates — all posts, all reactions, all replies, all profile changes, all follows/unfollows, etc. Having to do this would be too annoying for the End User.
+2. Making end users pay to send messages would require people to sign transactions every time they make any updates — all posts, all reactions, all replies, all profile changes, all follows/unfollows, etc. This would create much friction and annoyance, likely resulting in loss of users.
 
-This design still includes some direct pay endpoints, so even if an End User did not want to trust a Provider, they could still pay for all of their messages, assuming they have some way of obtaining FRQCY token.
+The proposed design includes direct pay endpoints, so even if an MSA did not want to trust a Provider, they could still pay for all of their messages, assuming they have some way of obtaining FRQCY token.
 
 ### Permissioned delegation is an industry standard
 
@@ -241,7 +241,7 @@ Including an effective block range in the Provider storage data would allow prov
 ### add_provider(delegator, Provider, permissions)
 _This still cannot be done; we've adopted the philosophy that all relationships should be mutual and opt-in, so adding a provider still requires both signatures._
 
-Directly adding a Provider, with or without a Provider's permission, is not to be implemented at this time. The original use case was for a potential wallet app to support browsing and adding providers. Adding/replacing a Provider for an existing account with an MSA id could still be done using the delegated methods, `add_self_as_delegate` or `replace_delegate_with_self`. A direct add brought up concerns about potential risks of adding a Provider without the Provider's knowledge. For example, if the Provider has removed the delegator for legitimate reasons, such as if the End User violated the Provider's Terms of Service, then the Provider ought to be able to prevent them from adding the Provider again just by paying for it.
+Directly adding a Provider, with or without a Provider's permission, is not to be implemented at this time. The original use case was for a potential wallet app to support browsing and adding providers. Adding/replacing a Provider for an existing account with an MSA id could still be done using the delegated methods, `add_self_as_delegate` or `replace_delegate_with_self`. A direct add brought up concerns about potential risks of adding a Provider without the Provider's knowledge. For example, if the Provider has removed the delegator for legitimate reasons, such as if the end user violated the Provider's Terms of Service, then the Provider ought to be able to prevent them from adding the Provider again just by paying for it.
 
 ## Glossary
 
@@ -250,7 +250,7 @@ Directly adding a Provider, with or without a Provider's permission, is not to b
 - **MSA**: Message Source Account refers to the DSNP Id that lives on the Frequency Chain as an integer MSA Id, plus one or more cryptographic key pairs that are associated with it.  The keys may or may not have a token account.
 - **Public Key**: A 32-byte (u256) number that is used to refer to an on-chain MSA and verify signatures. It is one of the keys of an MSA key pair
 - **MsaId**: An 8-byte (u64) number used as a lookup and storage key for delegations, among other things
-- **End User**: Groups or individuals that own an MSA that is not a Provider MSA.
+- **End user**: Also referred to as MSA holder. Groups or individuals that control an MSA that is not a Provider MSA.
 
 You may see our [Design Documents in the Frequency repository](https://github.com/frequency-chain/frequency/tree/main/designdocs).  For a more recent example, please see the [Provider Boost Implementation](https://github.com/frequency-chain/frequency/blob/feat/capacity-staking-rewards-impl/designdocs/provider_boosting_implementation.md) Design Document which I also wrote (both the implementation and [Economic Model docs](https://github.com/frequency-chain/frequency/blob/feat/capacity-staking-rewards-impl/designdocs/provider_boosting_economic_model.md)). However I did not select these, because I am the only person doing the implementation and it has been longer than a 3 month project.
 
