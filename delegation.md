@@ -7,7 +7,7 @@ This was a 1-3 month project on which I was lead and there were several of us wo
 This document describes provable, revocable, permissioned delegation of specific actions to support the [Decentralized Social Network Protocol (DSNP)](https://spec.dsnp.org) on the Frequency Polkadot Parachain, referred to from now on as [DSNP/Frequency (DSNP over Frequency)](https://spec.dsnp.org/Frequency/Overview.html).
 These actions are largely related to DSNP Id creation, DSNP Profile management, DSNP (Social) Graph, and DSNP Message announcements by the owner of the DSNP Id.
 
-On the Frequency chain, a DSNP Id is mapped to a Message Source Account, or MSA Id, which is controlled using cryptographic signatures via a Polkadot `AccountId` keypair.
+On the Frequency chain, a DSNP Id is mapped to a Message Source Account Id, or MSA Id, which is a pseudonymous id that is an integer, and the actions it can perform are authorized using a Polkadot `AccountId` cryptographic keypair.
 This control can be purely wallet-based, so it does not require a token balance to exist on chain.
 Non-token control of delegation actions uses cryptographic signatures of a payload, which is validated during the delegation transaction to prove authorization by both parties.  A failure to validate causes the transaction to fail.
 
